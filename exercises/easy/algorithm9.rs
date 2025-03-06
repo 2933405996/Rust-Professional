@@ -1,11 +1,11 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
 
-
 use std::cmp::Ord;
-use std::default::Default;
+use std::default::{self, Default};
+use std::fmt::Display;
 
 pub struct Heap<T>
 where
@@ -23,7 +23,7 @@ where
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
             count: 0,
-            items: vec![T::default()],
+            items: vec![],
             comparator,
         }
     }
@@ -36,12 +36,54 @@ where
         self.len() == 0
     }
 
+    pub fn heapify_up(&mut self) {
+        let mut idx = self.count - 1;
+        while idx > 0 {
+            let parent_idx = self.parent_idx(idx);
+            if (self.comparator)(&self.items[idx], &self.items[parent_idx]) {
+                self.items.swap(idx, parent_idx);
+            } else {
+                break;
+            }
+            idx = parent_idx;
+        }
+    }
+
+    pub fn heapify_down(&mut self) {
+        let mut idx = 0;
+        while idx < self.count {
+            let left_child_idx = self.left_child_idx(idx);
+            let right_child_idx = self.right_child_idx(idx);
+            let mut min_idx = idx;
+
+            if left_child_idx < self.count
+                && (self.comparator)(&self.items[left_child_idx], &self.items[min_idx])
+            {
+                min_idx = left_child_idx;
+            }
+            if right_child_idx < self.count
+                && (self.comparator)(&self.items[right_child_idx], &self.items[min_idx])
+            {
+                min_idx = right_child_idx;
+            }
+            if min_idx == idx {
+                break;
+            }
+            self.items.swap(idx, min_idx);
+            idx = min_idx;
+        }
+    }
+
     pub fn add(&mut self, value: T) {
         //TODO
+
+        self.items.push(value);
+        self.count += 1;
+        self.heapify_up();
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
-        idx / 2
+        (idx - 1) / 2
     }
 
     fn children_present(&self, idx: usize) -> bool {
@@ -49,7 +91,7 @@ where
     }
 
     fn left_child_idx(&self, idx: usize) -> usize {
-        idx * 2
+        idx * 2 + 1
     }
 
     fn right_child_idx(&self, idx: usize) -> usize {
@@ -58,7 +100,16 @@ where
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
         //TODO
-		0
+        let left_child_idx = self.left_child_idx(idx);
+        let right_child_idx = self.right_child_idx(idx);
+
+        if left_child_idx < self.count
+            && (self.comparator)(&self.items[left_child_idx], &self.items[right_child_idx])
+        {
+            left_child_idx
+        } else {
+            right_child_idx
+        }
     }
 }
 
@@ -79,13 +130,21 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default + Display,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
         //TODO
-		None
+        if !self.is_empty() {
+            let value = self.items.remove(0);
+            self.count -= 1;
+            if !self.is_empty() {
+                self.heapify_down();
+            }
+            return Some(value);
+        }
+        None
     }
 }
 
@@ -125,6 +184,7 @@ mod tests {
     #[test]
     fn test_min_heap() {
         let mut heap = MinHeap::new();
+
         heap.add(4);
         heap.add(2);
         heap.add(9);
