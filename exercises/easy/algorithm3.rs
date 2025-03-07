@@ -4,7 +4,10 @@
     you can use bubble sorting, insertion sorting, heap sorting, etc.
 */
 
-fn sort<T>(array: &mut [T]) {
+fn sort<T>(array: &mut [T])
+where
+    T: Ord,
+{
     //TODO
     for i in 0..array.len() - 1 {
         for j in (i + 1)..array.len() {
